@@ -1,6 +1,10 @@
 import { assertEquals, assertRejects } from "@std/assert";
 import { Average } from "../src/average.ts";
 import { FakeNumberSource } from "./doubles/fake_number_source.ts";
+import {
+  ConfigurableStubNumberSource,
+  HardCodedStubNumberSource,
+} from "./doubles/stub_number_source.ts";
 
 // Fake
 
@@ -34,4 +38,18 @@ Deno.test("fake: mean of empty file is NaN", async () => {
 Deno.test("fake: unknown path rejects", async () => {
   const average = new Average(fakeWithFiles("/does/not/exist"));
   await assertRejects(() => average.computeMeanOfFile(), Deno.errors.NotFound);
+});
+
+// Stub
+
+Deno.test("stub (hard-coded): mean of [1..5] is 3", async () => {
+  const average = new Average(new HardCodedStubNumberSource());
+  assertEquals(await average.computeMeanOfFile(), 3);
+});
+
+Deno.test("stub (configurable): mean of [1..5] is 3", async () => {
+  const average = new Average(
+    new ConfigurableStubNumberSource([1, 2, 3, 4, 5]),
+  );
+  assertEquals(await average.computeMeanOfFile(), 3);
 });
