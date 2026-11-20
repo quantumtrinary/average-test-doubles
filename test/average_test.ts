@@ -5,6 +5,7 @@ import {
   ConfigurableStubNumberSource,
   HardCodedStubNumberSource,
 } from "./doubles/stub_number_source.ts";
+import { MockNumberSource } from "./doubles/mock_number_source.ts";
 
 // Fake
 
@@ -52,4 +53,17 @@ Deno.test("stub (configurable): mean of [1..5] is 3", async () => {
     new ConfigurableStubNumberSource([1, 2, 3, 4, 5]),
   );
   assertEquals(await average.computeMeanOfFile(), 3);
+});
+
+// Mock
+
+Deno.test("mock: mean of [1..5] is 3, source read exactly once", async () => {
+  const mock = new MockNumberSource();
+  const average = new Average(mock);
+  assertEquals(mock.calls, 0);
+
+  const result = await average.computeMeanOfFile();
+
+  assertEquals(result, 3);
+  assertEquals(mock.calls, 1);
 });
