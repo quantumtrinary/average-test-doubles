@@ -1,11 +1,13 @@
 import { assertEquals, assertRejects } from "@std/assert";
 import { Average } from "../src/average.ts";
+import { FileAccess } from "../src/file_access.ts";
 import { FakeNumberSource } from "./doubles/fake_number_source.ts";
 import {
   ConfigurableStubNumberSource,
   HardCodedStubNumberSource,
 } from "./doubles/stub_number_source.ts";
 import { MockNumberSource } from "./doubles/mock_number_source.ts";
+import { SpyFileAccess } from "./doubles/spy_file_access.ts";
 
 // Fake
 
@@ -66,4 +68,26 @@ Deno.test("mock: mean of [1..5] is 3, source read exactly once", async () => {
 
   assertEquals(result, 3);
   assertEquals(mock.calls, 1);
+});
+
+// Spy
+
+Deno.test("spy: readNumbers called once and returns file numbers", async () => {
+  // Arrange: real file in a temporary location
+  const path = await Deno.makeTempFile({ suffix: ".txt" });
+  try {
+    await Deno.writeTextFile(path, "4\n8\n15\n16\n23\n42\n");
+    const spy = new SpyFileAccess(new FileAccess(path));
+    const average = new Average(spy);
+
+    // Act
+    const result = await average.computeMeanOfFile();
+
+    // Assert
+    assertEquals(result, 18);
+    assertEquals(spy.calls, 1);
+    assertEquals(spy.returned, [[4, 8, 15, 16, 23, 42]]);
+  } finally {
+    await Deno.remove(path);
+  }
 });
